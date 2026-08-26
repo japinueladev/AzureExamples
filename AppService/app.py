@@ -1,8 +1,12 @@
 from flask import Flask 
 
-app = Flask(__name__) 
+app = Flask(__name__)
 
-@app.route('/profile/') 
+@app.route('/')
+def index():
+    return "Hola mundo"
+
+@app.route('/profile/')
 def profile(): 
     return {"name": "Juan Pérez", "profile_photo_url": "https://picsum.photos/200"} 
 
