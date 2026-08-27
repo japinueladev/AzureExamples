@@ -1,41 +1,25 @@
-name: Trigger auto deployment for practica3-containerapp
+- name: Azure Login
+  uses: azure/login@v2
+  with:
+    client-id: ${{ secrets.PRACTICA3CONTAINERAPP_AZURE_CLIENT_ID }}
+    tenant-id: ${{ secrets.PRACTICA3CONTAINERAPP_AZURE_TENANT_ID }}
+    subscription-id: ${{ secrets.PRACTICA3CONTAINERAPP_AZURE_SUBSCRIPTION_ID }}
 
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
+- name: Login to Azure Container Registry
+  uses: docker/login-action@v3
+  with:
+    registry: japinueladev.azurecr.io
+    username: ${{ secrets.PRACTICA3CONTAINERAPP_REGISTRY_USERNAME }}
+    password: ${{ secrets.PRACTICA3CONTAINERAPP_REGISTRY_PASSWORD }}
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write
-      contents: read
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.PRACTICA3CONTAINERAPP_AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.PRACTICA3CONTAINERAPP_AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.PRACTICA3CONTAINERAPP_AZURE_SUBSCRIPTION_ID }}
-
-      - name: Build and deploy to Azure Container Apps
-        uses: azure/container-apps-deploy-action@v2
-        with:
-          appSourcePath: ${{ github.workspace }}/ContainerApp
-          dockerfilePath: Dockerfile
-
-          registryUrl: japinueladev.azurecr.io
-          registryUsername: ${{ secrets.PRACTICA3CONTAINERAPP_REGISTRY_USERNAME }}
-          registryPassword: ${{ secrets.PRACTICA3CONTAINERAPP_REGISTRY_PASSWORD }}
-
-          containerAppName: practica3-containerapp
-          resourceGroup: AzureExamples
-
-          imageToBuild: japinueladev.azurecr.io/perfiles:${{ github.sha }}
+- name: Build and deploy to Azure Container Apps
+  uses: azure/container-apps-deploy-action@v2
+  with:
+    appSourcePath: ${{ github.workspace }}/ContainerApp
+    dockerfilePath: Dockerfile
+    registryUrl: japinueladev.azurecr.io
+    registryUsername: ${{ secrets.PRACTICA3CONTAINERAPP_REGISTRY_USERNAME }}
+    registryPassword: ${{ secrets.PRACTICA3CONTAINERAPP_REGISTRY_PASSWORD }}
+    containerAppName: practica3-containerapp
+    resourceGroup: AzureExamples
+    imageToBuild: japinueladev.azurecr.io/perfiles:${{ github.sha }}
