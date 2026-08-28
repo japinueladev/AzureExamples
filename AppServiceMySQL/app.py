@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from sqlalchemy import create_engine, text
 
@@ -38,6 +40,35 @@ def profile():
 def health():
     try:
         with engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+
+        return {
+            "status": "ok",
+            "database": "connected"
+        }, 200
+
+    except Exception as e:
+        return {
+            "status": "error",
+            "database": "disconnected",
+            "error": str(e)
+        }, 500
+
+
+@app.route('/health-secret/')
+def health_secret():
+    database_url_secret = os.getenv("DATABASE_URL")
+
+    if not database_url_secret:
+        return {
+            "status": "error",
+            "database": "disconnected",
+            "error": "DATABASE_URL environment variable is not set"
+        }, 500
+
+    try:
+        secret_engine = create_engine(database_url_secret, pool_pre_ping=True)
+        with secret_engine.connect() as connection:
             connection.execute(text("SELECT 1"))
 
         return {
