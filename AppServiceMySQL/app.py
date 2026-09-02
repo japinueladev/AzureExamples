@@ -1,6 +1,6 @@
 import os
 
-from flask import Flask
+from flask import Flask, jsonify, redirect, request
 from sqlalchemy import create_engine, text
 
 app = Flask(__name__)
@@ -25,7 +25,7 @@ engine = create_engine(
 
 @app.route('/')
 def index():
-    return "Hola mundo"
+    return "Version 1.0"
 
 
 @app.route('/profile/')
@@ -34,6 +34,51 @@ def profile():
         "name": "Juan Pérez",
         "profile_photo_url": "https://picsum.photos/200"
     }
+
+
+@app.route('/profiles/')
+def profiles():
+    with engine.connect() as connection:
+        rows = connection.execute(
+            text("SELECT id, username, full_name, profile_photo_url FROM profiles")
+        ).mappings().all()
+
+    return jsonify([dict(row) for row in rows])
+
+
+@app.route('/profile/<username>/photo')
+def profile_photo(username):
+    with engine.connect() as connection:
+        row = connection.execute(
+            text("SELECT profile_photo_url FROM profiles WHERE username = :username"),
+            {"username": username}
+        ).mappings().first()
+
+    if row is None or not row["profile_photo_url"]:
+        return {"status": "error", "error": "Profile not found"}, 404
+
+    return redirect(row["profile_photo_url"])
+
+
+@app.route('/profile/update-fullname/', methods=['POST'])
+def profile_update_fullname():
+    data = request.get_json(silent=True) or {}
+    username = data.get("username")
+    full_name = data.get("full_name")
+
+    if not username or not full_name:
+        return {"status": "error", "error": "username and full_name are required"}, 400
+
+    with engine.begin() as connection:
+        result = connection.execute(
+            text("UPDATE profiles SET full_name = :full_name WHERE username = :username"),
+            {"full_name": full_name, "username": username}
+        )
+
+        if result.rowcount == 0:
+            return {"status": "error", "error": "Profile not found"}, 404
+
+    return {"status": "ok", "username": username, "full_name": full_name}, 200
 
 
 @app.route('/health/')
