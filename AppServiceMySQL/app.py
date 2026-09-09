@@ -25,7 +25,7 @@ engine = create_engine(
 
 @app.route('/')
 def index():
-    return "Version 1.0"
+    return "Version 3.14"
 
 
 @app.route('/profile/')
